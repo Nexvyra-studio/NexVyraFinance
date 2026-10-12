@@ -3,40 +3,44 @@
 
 /* tema escuro (padrão) */
 :root {
-  --bg: #0b0c0f;
-  --surface: #131519;
-  --surface-2: #1b1e24;
-  --surface-3: #252931;
-  --border: #23262d;
-  --text: #eef0f3;
-  --muted: #8b919c;
-  --faint: #5c626d;
-  --accent: #d4f36b;
-  --accent-ink: #11140a;
-  --accent-text: #d4f36b;
-  --income: #5bd69b;
-  --expense: #ff7f7f;
+  --bg: #060913;
+  --surface: #0d1220;
+  --surface-2: #141b2e;
+  --surface-3: #1e2740;
+  --border: #1a2236;
+  --text: #eaf0ff;
+  --muted: #8a95b0;
+  --faint: #56617c;
+  --accent: #0a6cff;
+  --accent-2: #19d3ff;
+  --accent-ink: #ffffff;
+  --accent-text: #4fa3ff;
+  --income: #34d399;
+  --expense: #ff6b81;
   --warn: #f5b44a;
-  --shadow: 0 10px 30px -12px rgb(0 0 0 / 0.6);
+  --shadow: 0 10px 30px -12px rgb(0 0 0 / 0.65);
+  --brand-gradient: linear-gradient(135deg, #0047f0 0%, #0a7bff 55%, #19d3ff 100%);
   color-scheme: dark;
 }
 
 :root[data-theme="light"] {
-  --bg: #f3f4f1;
+  --bg: #f2f5fb;
   --surface: #ffffff;
-  --surface-2: #f0f1ee;
-  --surface-3: #e4e6e1;
-  --border: #e3e5e0;
-  --text: #121410;
-  --muted: #6b7068;
-  --faint: #9a9f97;
-  --accent: #d4f36b;
-  --accent-ink: #11140a;
-  --accent-text: #5a7400;
-  --income: #12925a;
-  --expense: #d93f3f;
+  --surface-2: #edf1f8;
+  --surface-3: #dfe6f2;
+  --border: #e1e7f1;
+  --text: #0b1220;
+  --muted: #5d6984;
+  --faint: #95a0b8;
+  --accent: #0a62f5;
+  --accent-2: #0bb8e8;
+  --accent-ink: #ffffff;
+  --accent-text: #0756dc;
+  --income: #0f9f6a;
+  --expense: #e0344f;
   --warn: #b97700;
-  --shadow: 0 10px 30px -14px rgb(20 30 10 / 0.25);
+  --shadow: 0 10px 30px -14px rgb(10 40 120 / 0.22);
+  --brand-gradient: linear-gradient(135deg, #0047f0 0%, #0a7bff 55%, #19c6f5 100%);
   color-scheme: light;
 }
 
@@ -50,6 +54,7 @@
   --color-muted: var(--muted);
   --color-faint: var(--faint);
   --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
   --color-accent-ink: var(--accent-ink);
   --color-accent-text: var(--accent-text);
   --color-income: var(--income);
@@ -80,6 +85,17 @@ body {
 [data-hide-values="true"] .sensitive {
   filter: blur(9px);
   user-select: none;
+}
+
+/* gradiente da marca (logo) */
+.bg-brand {
+  background: var(--brand-gradient);
+}
+.text-brand {
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .no-scrollbar::-webkit-scrollbar {

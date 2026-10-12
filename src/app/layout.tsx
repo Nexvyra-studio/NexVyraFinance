@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   applicationName: "NexVyra Finance",
   appleWebApp: { capable: true, title: "NexVyra", statusBarStyle: "black-translucent" },
   manifest: "/manifest.webmanifest",
-  icons: { icon: "/icon.svg", apple: "/icon.svg" },
+  icons: { icon: "/favicon.png", apple: "/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = {
@@ -19,7 +19,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   viewportFit: "cover",
-  themeColor: "#0b0c0f",
+  themeColor: "#060913",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

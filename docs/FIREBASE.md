@@ -8,7 +8,7 @@ Google e grava tudo na nuvem.
 
 1. Crie um projeto em <https://console.firebase.google.com>.
 2. **Build → Firestore Database → Criar banco** (modo produção, região `southamerica-east1` / São Paulo).
-3. **Build → Authentication → Começar → Google** (ative o provedor).
+3. **Build → Authentication → Começar → Método de login** e ative **E-mail/senha** e **Google**.
 4. **Configurações do projeto → Seus apps → Web (`</>`)** → registre o app e copie o `firebaseConfig`.
 5. Copie `.env.example` para `.env.local` e preencha as chaves `NEXT_PUBLIC_FIREBASE_*`.
 6. Em `.env.local` troque para `NEXT_PUBLIC_DATA_SOURCE=firebase` e reinicie o `npm run dev`.
@@ -22,6 +22,12 @@ Google e grava tudo na nuvem.
 Não é preciso criar coleções ou índices manualmente: o Firestore cria as coleções no primeiro documento,
 e o app carrega cada coleção inteira (sem consultas que exijam índice composto). No primeiro login ele
 cria as categorias padrão e uma conta.
+
+## Vários usuários
+
+Cada pessoa cria a própria conta (e-mail/senha ou Google) na tela de login. Os dados de cada uma ficam em
+`users/{uid}` e as regras de `firestore.rules` só deixam o próprio usuário ler/escrever ali — ninguém vê
+os dados de ninguém. Para ver quem se cadastrou: **Authentication → Usuários** (dá para desativar ou excluir contas por lá).
 
 ## Estrutura
 

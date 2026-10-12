@@ -56,7 +56,7 @@ export function Button({
         size === "sm" && "h-9 px-3 text-sm",
         size === "md" && "h-11 px-4 text-sm",
         size === "lg" && "h-13 px-5 text-base",
-        variant === "primary" && "bg-accent text-accent-ink hover:brightness-105",
+        variant === "primary" && "bg-brand text-accent-ink shadow-[0_8px_20px_-10px_rgb(10_108_255/0.8)] hover:brightness-110",
         variant === "secondary" && "bg-surface-2 text-fg hover:bg-surface-3",
         variant === "ghost" && "text-muted hover:bg-surface-2 hover:text-fg",
         variant === "danger" && "bg-expense/12 text-expense hover:bg-expense/20",

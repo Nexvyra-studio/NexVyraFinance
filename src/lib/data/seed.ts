@@ -43,7 +43,7 @@ export function initialData(): FinanceData {
       name: "Conta principal",
       type: "corrente",
       initialBalance: 0,
-      color: "#D4F36B",
+      color: "#2F7BFF",
       archived: false,
       ...base(),
     },

@@ -9,7 +9,7 @@ import { CATEGORY_COLORS, CATEGORY_ICONS, CategoryIcon } from "./category-icon";
 import { MoneyInput } from "./money-input";
 import { Button, Confirm, Field, Segmented, Sheet, Toggle, cx, inputClass } from "./ui";
 
-const ACCOUNT_COLORS = ["#D4F36B", "#5BD69B", "#6BB8F5", "#B49BF5", "#F59E6B", "#F58FA8", "#5ED1E0", "#F7C55E"];
+const ACCOUNT_COLORS = ["#2F7BFF", "#5BD69B", "#6BB8F5", "#B49BF5", "#F59E6B", "#F58FA8", "#5ED1E0", "#F7C55E"];
 const CARD_COLORS = ["#8A5CF6", "#FF8A3D", "#1F2937", "#E11D48", "#0EA5E9", "#16A34A", "#D4AF37", "#64748B"];
 
 function ColorPicker({ value, onChange, colors }: { value: string; onChange: (c: string) => void; colors: string[] }) {

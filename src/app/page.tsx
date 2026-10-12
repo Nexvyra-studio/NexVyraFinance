@@ -65,28 +65,27 @@ export default function HomePage() {
       <div className="grid grid-cols-1 gap-x-6 lg:grid-cols-[1.15fr_1fr]">
         <div>
           {/* saldo */}
-          <section className="relative mt-3 overflow-hidden rounded-[28px] border border-line bg-surface p-5">
-            <div className="pointer-events-none absolute -right-16 -top-20 size-56 rounded-full bg-accent/15 blur-3xl" />
-            <p className="text-sm font-semibold text-muted">Saldo em contas</p>
-            <Money value={view.balance} className="mt-1 block text-[38px] font-extrabold leading-tight" />
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <Link href="/futuro" className="rounded-2xl bg-surface-2 p-3 transition hover:bg-surface-3">
-                <p className="text-xs font-semibold text-muted">Previsto fim do mês</p>
-                <Money value={endOfMonth} className={cx("mt-0.5 block text-lg font-bold", endOfMonth < 0 && "text-expense")} />
+          <section className="bg-brand relative mt-3 overflow-hidden rounded-[28px] p-5 text-white shadow-[0_18px_40px_-18px_rgb(10_108_255/0.7)]">
+            <div className="pointer-events-none absolute -right-20 -top-24 size-64 rounded-full bg-white/15 blur-2xl" />
+            <div className="pointer-events-none absolute -bottom-28 -left-16 size-64 rounded-full bg-[#0030b0]/40 blur-3xl" />
+            <p className="relative text-sm font-semibold text-white/75">Saldo em contas</p>
+            <Money value={view.balance} className="relative mt-1 block text-[38px] font-extrabold leading-tight" />
+            <div className="relative mt-4 grid grid-cols-2 gap-3">
+              <Link href="/futuro" className="rounded-2xl bg-white/12 p-3 backdrop-blur-sm transition hover:bg-white/20">
+                <p className="text-xs font-semibold text-white/70">Previsto fim do mês</p>
+                <Money value={endOfMonth} className={cx("mt-0.5 block text-lg font-bold", endOfMonth < 0 && "text-[#ffd0d7]")} />
               </Link>
-              <Link href="/futuro" className="rounded-2xl bg-surface-2 p-3 transition hover:bg-surface-3">
-                <p className="text-xs font-semibold text-muted">Em {monthLabel(view.proj[2]?.month ?? month, false).toLowerCase()}</p>
-                <Money value={in3} className={cx("mt-0.5 block text-lg font-bold", in3 < 0 && "text-expense")} />
+              <Link href="/futuro" className="rounded-2xl bg-white/12 p-3 backdrop-blur-sm transition hover:bg-white/20">
+                <p className="text-xs font-semibold text-white/70">Em {monthLabel(view.proj[2]?.month ?? month, false).toLowerCase()}</p>
+                <Money value={in3} className={cx("mt-0.5 block text-lg font-bold", in3 < 0 && "text-[#ffd0d7]")} />
               </Link>
             </div>
-            <div className="mt-3 flex gap-4 px-1 text-sm">
-              <span className="flex items-center gap-1.5 text-muted">
-                <ArrowDownLeft size={16} className="text-income" /> Entradas{" "}
-                <Money value={view.summary.income} className="font-semibold text-fg" />
+            <div className="relative mt-3 flex flex-wrap gap-x-4 gap-y-1 px-1 text-sm">
+              <span className="flex items-center gap-1.5 text-white/75">
+                <ArrowDownLeft size={16} /> Entradas <Money value={view.summary.income} className="font-semibold text-white" />
               </span>
-              <span className="flex items-center gap-1.5 text-muted">
-                <ArrowUpRight size={16} className="text-expense" /> Saídas{" "}
-                <Money value={view.summary.expense} className="font-semibold text-fg" />
+              <span className="flex items-center gap-1.5 text-white/75">
+                <ArrowUpRight size={16} /> Saídas <Money value={view.summary.expense} className="font-semibold text-white" />
               </span>
             </div>
           </section>

@@ -1,11 +1,224 @@
 rules_version = '2';
 
-// Cada usuário só lê e escreve dentro de users/{seu uid}/...
+// =====================================================================
+//  NexVyra Finance — regras de segurança do Firestore
+//
+//  Estrutura: users/{uid}/{coleção}/{id}
+//  - Cada usuário só lê e grava dentro do próprio users/{uid}.
+//  - Só as 6 coleções do app são aceitas.
+//  - Cada documento é validado (campos obrigatórios, tipos e valores),
+//    seguindo o modelo de src/lib/types.ts e docs/FIREBASE.md.
+//  - Valores em dinheiro são inteiros em centavos.
+//  - Datas "YYYY-MM-DD" e meses "YYYY-MM".
+// =====================================================================
+
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // ------------------------------------------------------------------
+    // Funções auxiliares
+    // ------------------------------------------------------------------
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function data() {
+      return request.resource.data;
+    }
+
+    // o id gravado dentro do documento precisa ser igual ao id do documento
+    function idMatches(docId) {
+      return data().id == docId;
+    }
+
+    function isStr(v, maxLen) {
+      return v is string && v.size() <= maxLen;
+    }
+
+    function isNonEmptyStr(v, maxLen) {
+      return isStr(v, maxLen) && v.size() > 0;
+    }
+
+    function isStrOrNull(v, maxLen) {
+      return v == null || isStr(v, maxLen);
+    }
+
+    function isMoney(v) {
+      return v is int && v >= 0 && v <= 100000000000;
+    }
+
+    function isSignedMoney(v) {
+      return v is int && v >= -100000000000 && v <= 100000000000;
+    }
+
+    function isDate(v) {
+      return v is string && v.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    function isMonth(v) {
+      return v is string && v.matches('^[0-9]{4}-[0-9]{2}$');
+    }
+
+    function isMonthOrNull(v) {
+      return v == null || isMonth(v);
+    }
+
+    function isDay(v) {
+      return v is int && v >= 1 && v <= 31;
+    }
+
+    function isColor(v) {
+      return v is string && v.matches('^#[0-9A-Fa-f]{6}$');
+    }
+
+    function isTimestampStr(v) {
+      return isNonEmptyStr(v, 40);
+    }
+
+    function hasBase() {
+      return data().keys().hasAll(['id', 'createdAt', 'updatedAt'])
+        && isNonEmptyStr(data().id, 128)
+        && isTimestampStr(data().createdAt)
+        && isTimestampStr(data().updatedAt);
+    }
+
+    // ------------------------------------------------------------------
+    // Validação de cada coleção
+    // ------------------------------------------------------------------
+
+    // accounts — contas (banco, carteira, poupança, investimento)
+    function validAccount() {
+      let d = data();
+      return hasBase()
+        && d.keys().hasAll(['name', 'type', 'initialBalance', 'color', 'archived'])
+        && isNonEmptyStr(d.name, 60)
+        && d.type in ['corrente', 'poupanca', 'carteira', 'investimento']
+        && isSignedMoney(d.initialBalance)
+        && isColor(d.color)
+        && d.archived is bool;
+    }
+
+    // cards — cartões de crédito
+    function validCard() {
+      let d = data();
+      return hasBase()
+        && d.keys().hasAll(['name', 'brand', 'limit', 'closingDay', 'dueDay', 'color', 'paymentAccountId', 'archived'])
+        && isNonEmptyStr(d.name, 60)
+        && d.brand in ['visa', 'mastercard', 'elo', 'amex', 'hipercard', 'outro']
+        && isMoney(d.limit)
+        && isDay(d.closingDay)
+        && isDay(d.dueDay)
+        && isColor(d.color)
+        && isStrOrNull(d.paymentAccountId, 128)
+        && d.archived is bool;
+    }
+
+    // categories
+    function validCategory() {
+      let d = data();
+      return hasBase()
+        && d.keys().hasAll(['name', 'kind', 'color', 'icon'])
+        && isNonEmptyStr(d.name, 40)
+        && d.kind in ['income', 'expense']
+        && isColor(d.color)
+        && isNonEmptyStr(d.icon, 30);
+    }
+
+    // transactions — lançamentos (receita, despesa, transferência, compra no cartão)
+    function validTransaction() {
+      let d = data();
+      return hasBase()
+        && d.keys().hasAll([
+          'type', 'description', 'amount', 'date', 'categoryId', 'accountId', 'toAccountId',
+          'cardId', 'invoiceMonth', 'paid', 'installmentGroupId', 'installmentNumber',
+          'installmentTotal', 'recurrenceId', 'notes'
+        ])
+        && d.type in ['income', 'expense', 'transfer']
+        && isStr(d.description, 120)
+        && isMoney(d.amount) && d.amount > 0
+        && isDate(d.date)
+        && isStrOrNull(d.categoryId, 128)
+        && isStrOrNull(d.accountId, 128)
+        && isStrOrNull(d.toAccountId, 128)
+        && isStrOrNull(d.cardId, 128)
+        && isMonthOrNull(d.invoiceMonth)
+        && d.paid is bool
+        && isStrOrNull(d.installmentGroupId, 128)
+        && (d.installmentNumber == null || (d.installmentNumber is int && d.installmentNumber >= 1 && d.installmentNumber <= 120))
+        && (d.installmentTotal == null || (d.installmentTotal is int && d.installmentTotal >= 1 && d.installmentTotal <= 120))
+        && isStrOrNull(d.recurrenceId, 128)
+        && isStr(d.notes, 300)
+        // precisa estar em uma conta OU em um cartão
+        && (d.accountId != null || d.cardId != null)
+        // compra no cartão sempre tem mês de fatura
+        && (d.cardId == null || d.invoiceMonth != null)
+        // transferência sempre tem conta de destino e não usa cartão
+        && (d.type != 'transfer' || (d.toAccountId != null && d.cardId == null));
+    }
+
+    // recurrences — fixos mensais (salário, aluguel, assinaturas)
+    function validRecurrence() {
+      let d = data();
+      return hasBase()
+        && d.keys().hasAll([
+          'type', 'description', 'amount', 'categoryId', 'accountId', 'cardId',
+          'dayOfMonth', 'startMonth', 'endMonth', 'skippedMonths', 'active'
+        ])
+        && d.type in ['income', 'expense']
+        && isNonEmptyStr(d.description, 120)
+        && isMoney(d.amount) && d.amount > 0
+        && isStrOrNull(d.categoryId, 128)
+        && isStrOrNull(d.accountId, 128)
+        && isStrOrNull(d.cardId, 128)
+        && isDay(d.dayOfMonth)
+        && isMonth(d.startMonth)
+        && isMonthOrNull(d.endMonth)
+        && d.skippedMonths is list && d.skippedMonths.size() <= 600
+        && d.active is bool;
+    }
+
+    // invoices — pagamento de fatura. id = "{cardId}_{YYYY-MM}"
+    function validInvoice(docId) {
+      let d = data();
+      return hasBase()
+        && d.keys().hasAll(['cardId', 'month', 'paid', 'paidAt', 'paidAmount', 'accountId'])
+        && isNonEmptyStr(d.cardId, 128)
+        && isMonth(d.month)
+        && docId == d.cardId + '_' + d.month
+        && d.paid is bool
+        && isStrOrNull(d.paidAt, 40)
+        && isMoney(d.paidAmount)
+        && isStrOrNull(d.accountId, 128);
+    }
+
+    function validDoc(collection, docId) {
+      return idMatches(docId) && (
+        (collection == 'accounts' && validAccount()) ||
+        (collection == 'cards' && validCard()) ||
+        (collection == 'categories' && validCategory()) ||
+        (collection == 'transactions' && validTransaction()) ||
+        (collection == 'recurrences' && validRecurrence()) ||
+        (collection == 'invoices' && validInvoice(docId))
+      );
+    }
+
+    // ------------------------------------------------------------------
+    // Regras
+    // ------------------------------------------------------------------
+
+    // o documento users/{uid} em si não é usado pelo app
+    match /users/{userId} {
+      allow read, write: if false;
+    }
+
     match /users/{userId}/{collection}/{docId} {
-      allow read, write: if request.auth != null
-        && request.auth.uid == userId
+      allow read: if isOwner(userId)
+        && collection in ['accounts', 'cards', 'categories', 'transactions', 'recurrences', 'invoices'];
+
+      allow create, update: if isOwner(userId) && validDoc(collection, docId);
+
+      allow delete: if isOwner(userId)
         && collection in ['accounts', 'cards', 'categories', 'transactions', 'recurrences', 'invoices'];
     }
 

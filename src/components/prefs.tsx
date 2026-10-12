@@ -44,7 +44,7 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
     document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.hideValues = String(hideValues);
     const meta = document.querySelector('meta[name="theme-color"]');
-    meta?.setAttribute("content", theme === "light" ? "#f3f4f1" : "#0b0c0f");
+    meta?.setAttribute("content", theme === "light" ? "#f2f5fb" : "#060913");
     try {
       localStorage.setItem(KEY, JSON.stringify({ theme, hideValues }));
     } catch {}

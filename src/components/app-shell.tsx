@@ -7,9 +7,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useFinance } from "@/store/finance-store";
+import { AuthScreen } from "./auth-screen";
 import { Logo } from "./logo";
 import { usePrefs } from "./prefs";
 import { useSheets } from "./sheets";
+import { UserAvatar } from "./user-avatar";
 import { Button, IconButton, cx } from "./ui";
 
 const NAV = [
@@ -54,9 +56,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Link>
           ))}
         </nav>
-        <div className="mt-auto flex gap-1 px-1">
-          <PrivacyButton />
-          <ThemeButton />
+        <div className="mt-auto space-y-2">
+          <SidebarUser active={path.startsWith("/perfil")} />
+          <div className="flex gap-1 px-1">
+            <PrivacyButton />
+            <ThemeButton />
+          </div>
         </div>
       </aside>
 
@@ -75,7 +80,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               type="button"
               aria-label="Novo lançamento"
               onClick={() => openNew()}
-              className="-mt-6 grid size-14 place-items-center rounded-[22px] bg-accent text-accent-ink shadow-[0_8px_24px_-6px_rgb(212_243_107/0.55)] transition active:scale-90"
+              className="-mt-6 grid size-14 place-items-center rounded-[22px] bg-brand text-accent-ink shadow-[0_8px_24px_-6px_rgb(10_108_255/0.6)] transition active:scale-90"
             >
               <Plus size={28} strokeWidth={2.5} />
             </button>
@@ -124,6 +129,38 @@ export function ThemeButton() {
   );
 }
 
+/** Avatar no topo (celular) que abre o perfil */
+function HeaderAvatar() {
+  const { user, source } = useFinance();
+  if (source !== "firebase" || !user) return null;
+  return (
+    <Link href="/perfil" aria-label="Meu perfil" className="ml-1 rounded-full transition active:scale-95 md:hidden">
+      <UserAvatar user={user} size={34} />
+    </Link>
+  );
+}
+
+/** Usuário no rodapé do menu lateral (desktop) */
+function SidebarUser({ active }: { active: boolean }) {
+  const { user, source } = useFinance();
+  if (source !== "firebase" || !user) return null;
+  return (
+    <Link
+      href="/perfil"
+      className={cx(
+        "flex items-center gap-3 rounded-2xl p-2 transition",
+        active ? "bg-surface-2" : "hover:bg-surface-2/60",
+      )}
+    >
+      <UserAvatar user={user} size={36} />
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-semibold">{user.name || "Meu perfil"}</span>
+        <span className="block truncate text-xs text-muted">{user.email}</span>
+      </span>
+    </Link>
+  );
+}
+
 /** Cabeçalho das páginas (no mobile traz os atalhos de privacidade e ajustes) */
 export function PageHeader({ title, subtitle, actions }: { title: ReactNode; subtitle?: ReactNode; actions?: ReactNode }) {
   return (
@@ -140,6 +177,7 @@ export function PageHeader({ title, subtitle, actions }: { title: ReactNode; sub
         <Link href="/ajustes" aria-label="Ajustes" className="grid size-10 place-items-center rounded-full text-muted hover:bg-surface-2 md:hidden">
           <Settings size={20} />
         </Link>
+        <HeaderAvatar />
       </div>
     </header>
   );
@@ -148,20 +186,13 @@ export function PageHeader({ title, subtitle, actions }: { title: ReactNode; sub
 /* ------------------------- telas de carregamento/login ------------------------- */
 
 function Gate() {
-  const { status, error, signIn } = useFinance();
+  const { status, error } = useFinance();
+  if (status === "signed-out") return <AuthScreen />;
   return (
     <div className="grid min-h-dvh place-items-center px-6">
       <div className="flex w-full max-w-sm flex-col items-center text-center">
         <Logo big />
-        {status === "loading" && <LoaderCircle className="mt-10 animate-spin text-muted" />}
-        {status === "signed-out" && (
-          <>
-            <p className="mt-6 text-muted">Entre para acessar suas finanças.</p>
-            <Button size="lg" className="mt-6 w-full" onClick={signIn}>
-              Entrar com Google
-            </Button>
-          </>
-        )}
+        {status === "loading" && <LoaderCircle className="mt-10 animate-spin text-accent-text" />}
         {status === "error" && (
           <div className="mt-8 rounded-2xl border border-expense/30 bg-expense/10 p-4 text-sm text-expense">{error}</div>
         )}

@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  ChevronRight, CloudUpload, CreditCard, Database, Download, LogOut, Moon, Plus, Repeat, Sparkles, Sun, Trash2, Upload, Wallet,
+  ChevronRight, CloudUpload, CreditCard, Database, Download, Moon, Plus, Repeat, Sparkles, Sun, Trash2, Upload, Wallet,
 } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/app-shell";
 import { CategoryIcon } from "@/components/category-icon";
 import { AccountForm, CategoryForm, RecurrenceForm } from "@/components/forms";
 import { usePrefs } from "@/components/prefs";
+import { UserAvatar } from "@/components/user-avatar";
 import { Badge, Button, Card, Confirm, Money, SectionTitle, Segmented, Toggle } from "@/components/ui";
 import { monthLabel, todayISO } from "@/lib/dates";
 import { accountBalance } from "@/lib/finance";
@@ -23,7 +24,7 @@ const ACCOUNT_TYPE: Record<string, string> = {
 };
 
 export default function AjustesPage() {
-  const { data, source, user, replaceData, loadDemo, resetData, importLocalToFirebase, signOut, notify } = useFinance();
+  const { data, source, user, replaceData, loadDemo, resetData, importLocalToFirebase, notify } = useFinance();
   const lk = useLookups();
   const { theme, setTheme, hideValues, toggleHideValues } = usePrefs();
   const [accountForm, setAccountForm] = useState<Account | "new" | null>(null);
@@ -145,6 +146,23 @@ export default function AjustesPage() {
         </div>
 
         <div>
+          {/* conta do usuário (modo Firebase) */}
+          {source === "firebase" && user && (
+            <>
+              <SectionTitle>Minha conta</SectionTitle>
+              <Link href="/perfil" className="flex items-center gap-3 rounded-3xl border border-line bg-surface p-4 transition hover:bg-surface-2/50">
+                <UserAvatar user={user} size={48} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold">{user.name || "Minha conta"}</p>
+                  <p className="truncate text-xs text-muted">{user.email}</p>
+                </div>
+                <span className="text-sm font-semibold text-accent-text">Ver perfil</span>
+                <ChevronRight size={16} className="text-faint" />
+              </Link>
+              <p className="mt-2 px-2 text-xs text-faint">Seus dados são privados: só a sua conta consegue ler e alterar.</p>
+            </>
+          )}
+
           {/* aparência */}
           <SectionTitle>Aparência</SectionTitle>
           <Card className="space-y-2">
@@ -207,11 +225,6 @@ export default function AjustesPage() {
             <Button variant="danger" className="w-full" onClick={() => setConfirm("reset")}>
               <Trash2 size={17} /> Apagar tudo e começar do zero
             </Button>
-            {source === "firebase" && (
-              <Button variant="ghost" className="w-full" onClick={signOut}>
-                <LogOut size={17} /> Sair
-              </Button>
-            )}
           </Card>
 
           <div className="mt-8 flex items-center justify-center gap-2 text-xs text-faint">

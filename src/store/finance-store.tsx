@@ -59,13 +59,34 @@ export interface NewTransactionInput {
   notes: string;
 }
 
+export type SignInMethod =
+  | { kind: "google" }
+  | { kind: "email"; email: string; password: string }
+  | { kind: "signup"; name: string; email: string; password: string };
+
 type Upsertable<T> = Omit<T, "id" | "createdAt" | "updatedAt"> & { id?: ID; createdAt?: string };
 
-interface UserInfo {
+export interface UserInfo {
   uid: string;
   name: string | null;
   email: string | null;
   photoURL: string | null;
+  /** "password" e/ou "google.com" */
+  providers: string[];
+  createdAt: string | null;
+  lastLoginAt: string | null;
+}
+
+function toUserInfo(u: import("firebase/auth").User): UserInfo {
+  return {
+    uid: u.uid,
+    name: u.displayName,
+    email: u.email,
+    photoURL: u.photoURL,
+    providers: u.providerData.map((p) => p.providerId),
+    createdAt: u.metadata.creationTime ?? null,
+    lastLoginAt: u.metadata.lastSignInTime ?? null,
+  };
 }
 
 interface FinanceContext {
@@ -98,7 +119,10 @@ interface FinanceContext {
   loadDemo: () => Promise<void>;
   resetData: () => Promise<void>;
   importLocalToFirebase: () => Promise<boolean>;
-  signIn: () => Promise<void>;
+  signIn: (method: SignInMethod) => Promise<string | null>;
+  resetPassword: (email: string) => Promise<string | null>;
+  updateName: (name: string) => Promise<string | null>;
+  changePassword: (current: string, next: string) => Promise<string | null>;
   signOut: () => Promise<void>;
 }
 
@@ -168,7 +192,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
             setStatus("signed-out");
             return;
           }
-          setUser({ uid: u.uid, name: u.displayName, email: u.email, photoURL: u.photoURL });
+          setUser(toUserInfo(u));
           setStatus("loading");
           await loadFrom(await createFirebaseRepository(u.uid));
         });
@@ -525,20 +549,60 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     return true;
   }, [replaceData, notify]);
 
-  const signIn = useCallback(async () => {
+  /** Login. Retorna a mensagem de erro (ou null se deu certo) */
+  const signIn = useCallback(async (method: SignInMethod): Promise<string | null> => {
+    const auth = await import("@/lib/firebase/auth");
     try {
-      const { signInWithGoogle } = await import("@/lib/firebase/auth");
-      await signInWithGoogle();
+      if (method.kind === "google") await auth.signInWithGoogle();
+      else if (method.kind === "email") await auth.signInWithEmail(method.email, method.password);
+      else {
+        await auth.signUpWithEmail(method.name, method.email, method.password);
+        const u = auth.currentUser();
+        if (u) setUser(toUserInfo(u)); // já com o nome informado no cadastro
+      }
+      return null;
     } catch (err) {
       console.error(err);
-      notify("Não foi possível entrar");
+      return auth.authErrorMessage(err);
     }
-  }, [notify]);
+  }, []);
+
+  const resetPassword = useCallback(async (email: string): Promise<string | null> => {
+    const auth = await import("@/lib/firebase/auth");
+    try {
+      await auth.resetPassword(email);
+      return null;
+    } catch (err) {
+      return auth.authErrorMessage(err);
+    }
+  }, []);
+
+  const updateName = useCallback(async (name: string): Promise<string | null> => {
+    const auth = await import("@/lib/firebase/auth");
+    try {
+      const u = await auth.updateDisplayName(name);
+      setUser(toUserInfo(u));
+      return null;
+    } catch (err) {
+      return auth.authErrorMessage(err);
+    }
+  }, []);
+
+  const changePassword = useCallback(async (current: string, next: string): Promise<string | null> => {
+    const auth = await import("@/lib/firebase/auth");
+    try {
+      await auth.changePassword(current, next);
+      return null;
+    } catch (err) {
+      return auth.authErrorMessage(err);
+    }
+  }, []);
 
   const signOut = useCallback(async () => {
     const { signOutUser } = await import("@/lib/firebase/auth");
-    await signOutUser();
+    repoRef.current = null; // nada mais é gravado depois de sair
     setData(emptyData());
+    await signOutUser();
   }, []);
 
   const value = useMemo<FinanceContext>(
@@ -569,13 +633,16 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       resetData,
       importLocalToFirebase,
       signIn,
+      resetPassword,
+      updateName,
+      changePassword,
       signOut,
     }),
     [
       data, status, error, user, toast, notify, addTransaction, saveEntry, deleteEntry, togglePaid,
       saveAccount, deleteAccount, saveCard, deleteCard, saveCategory, deleteCategory, saveRecurrence,
       deleteRecurrence, payInvoice, reopenInvoice, replaceData, loadDemo, resetData,
-      importLocalToFirebase, signIn, signOut,
+      importLocalToFirebase, signIn, resetPassword, updateName, changePassword, signOut,
     ],
   );
 
