@@ -131,8 +131,7 @@ export function ThemeButton() {
 
 /** Avatar no topo (celular) que abre o perfil */
 function HeaderAvatar() {
-  const { user, source } = useFinance();
-  if (source !== "firebase" || !user) return null;
+  const { user } = useFinance();
   return (
     <Link href="/perfil" aria-label="Meu perfil" className="ml-1 rounded-full transition active:scale-95 md:hidden">
       <UserAvatar user={user} size={34} />
@@ -143,7 +142,6 @@ function HeaderAvatar() {
 /** Usuário no rodapé do menu lateral (desktop) */
 function SidebarUser({ active }: { active: boolean }) {
   const { user, source } = useFinance();
-  if (source !== "firebase" || !user) return null;
   return (
     <Link
       href="/perfil"
@@ -154,8 +152,10 @@ function SidebarUser({ active }: { active: boolean }) {
     >
       <UserAvatar user={user} size={36} />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold">{user.name || "Meu perfil"}</span>
-        <span className="block truncate text-xs text-muted">{user.email}</span>
+        <span className="block truncate text-sm font-semibold">{user?.name || "Meu perfil"}</span>
+        <span className="block truncate text-xs text-muted">
+          {source === "firebase" ? user?.email : "Modo local (sem login)"}
+        </span>
       </span>
     </Link>
   );

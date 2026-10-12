@@ -27,8 +27,8 @@ export default function PerfilPage() {
         <Card className="mt-3">
           <Empty
             icon={<Wallet />}
-            title="Modo local (sem login)"
-            text="Os dados estão salvos só neste navegador. Para ter login, perfis e usar com outras pessoas, ative o Firebase (NEXT_PUBLIC_DATA_SOURCE=firebase)."
+            title="Login desativado (modo local)"
+            text="Neste modo não existe usuário: os dados ficam só neste navegador. Para ter login, trocar de usuário e cada pessoa ter seus próprios dados, o app precisa rodar com NEXT_PUBLIC_DATA_SOURCE=firebase e as chaves do Firebase (no .env.local para rodar no PC e em Environment Variables na Vercel para o site publicado)."
           />
         </Card>
       </>
