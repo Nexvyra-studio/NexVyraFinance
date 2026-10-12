@@ -92,6 +92,8 @@ export interface Transaction extends BaseDoc {
   /** quando o lançamento foi gerado a partir de um fixo mensal */
   recurrenceId: ID | null;
   notes: string;
+  /** id do lançamento no extrato importado (evita importar duas vezes) */
+  externalId?: string | null;
 }
 
 /* ---------------------------- recurrences --------------------------- */

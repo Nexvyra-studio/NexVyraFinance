@@ -4,7 +4,7 @@ import {
   ChevronRight, CloudUpload, CreditCard, Database, Download, Moon, Plus, Repeat, Sparkles, Sun, Trash2, Upload, Wallet,
 } from "lucide-react";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { CategoryIcon } from "@/components/category-icon";
 import { AccountForm, CategoryForm, RecurrenceForm } from "@/components/forms";
@@ -13,7 +13,7 @@ import { UserAvatar } from "@/components/user-avatar";
 import { Badge, Button, Card, Confirm, Money, SectionTitle, Segmented, Toggle } from "@/components/ui";
 import { monthLabel, todayISO } from "@/lib/dates";
 import { accountBalance } from "@/lib/finance";
-import type { Account, Category, CategoryKind, FinanceData, Recurrence } from "@/lib/types";
+import type { Account, Category, CategoryKind, Recurrence } from "@/lib/types";
 import { useFinance, useLookups } from "@/store/finance-store";
 
 const ACCOUNT_TYPE: Record<string, string> = {
@@ -24,16 +24,14 @@ const ACCOUNT_TYPE: Record<string, string> = {
 };
 
 export default function AjustesPage() {
-  const { data, source, user, replaceData, loadDemo, resetData, importLocalToFirebase, notify } = useFinance();
+  const { data, source, user, loadDemo, resetData, importLocalToFirebase, notify } = useFinance();
   const lk = useLookups();
   const { theme, setTheme, hideValues, toggleHideValues } = usePrefs();
   const [accountForm, setAccountForm] = useState<Account | "new" | null>(null);
   const [categoryForm, setCategoryForm] = useState<Category | "new" | null>(null);
   const [recForm, setRecForm] = useState<Recurrence | "new" | null>(null);
   const [catKind, setCatKind] = useState<CategoryKind>("expense");
-  const [confirm, setConfirm] = useState<null | "demo" | "reset" | "import" | "migrate">(null);
-  const [pendingImport, setPendingImport] = useState<FinanceData | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [confirm, setConfirm] = useState<null | "demo" | "reset" | "migrate">(null);
 
   const exportJson = () => {
     const blob = new Blob([JSON.stringify({ app: "nexvyra-finance", version: 1, exportedAt: new Date().toISOString(), data }, null, 2)], {
@@ -45,18 +43,6 @@ export default function AjustesPage() {
     a.download = `nexvyra-finance-backup-${todayISO()}.json`;
     a.click();
     URL.revokeObjectURL(url);
-  };
-
-  const onFile = async (file: File) => {
-    try {
-      const json = JSON.parse(await file.text());
-      const d = (json.data ?? json) as FinanceData;
-      if (!Array.isArray(d.accounts) || !Array.isArray(d.transactions)) throw new Error("formato");
-      setPendingImport(d);
-      setConfirm("import");
-    } catch {
-      notify("Arquivo inválido");
-    }
   };
 
   const accounts = data.accounts.slice().sort((a, b) => Number(a.archived) - Number(b.archived));
@@ -193,25 +179,14 @@ export default function AjustesPage() {
               <Badge tone={source === "firebase" ? "income" : "muted"}>{source === "firebase" ? "nuvem" : "local"}</Badge>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <Button variant="secondary" onClick={exportJson}>
-                <Download size={17} /> Exportar
+            <Link href="/importar" className="block">
+              <Button className="w-full">
+                <Upload size={17} /> Importar extrato do banco
               </Button>
-              <Button variant="secondary" onClick={() => fileRef.current?.click()}>
-                <Upload size={17} /> Importar
-              </Button>
-            </div>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="application/json,.json"
-              hidden
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) onFile(f);
-                e.target.value = "";
-              }}
-            />
+            </Link>
+            <Button variant="secondary" className="w-full" onClick={exportJson}>
+              <Download size={17} /> Baixar cópia dos meus dados
+            </Button>
 
             {source === "firebase" && (
               <Button variant="secondary" className="w-full" onClick={() => setConfirm("migrate")}>
@@ -256,20 +231,6 @@ export default function AjustesPage() {
         confirmLabel="Apagar tudo"
         danger
         onConfirm={resetData}
-      />
-      <Confirm
-        open={confirm === "import"}
-        onClose={() => { setConfirm(null); setPendingImport(null); }}
-        title="Importar backup?"
-        message={`Os dados atuais serão substituídos pelo backup (${pendingImport?.transactions.length ?? 0} lançamentos).`}
-        confirmLabel="Importar"
-        danger
-        onConfirm={async () => {
-          if (pendingImport) {
-            await replaceData(pendingImport);
-            notify("Backup importado");
-          }
-        }}
       />
       <Confirm
         open={confirm === "migrate"}

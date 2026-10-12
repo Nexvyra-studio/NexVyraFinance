@@ -102,6 +102,7 @@ interface FinanceContext {
   saveEntry: (entry: Entry, patch: Partial<Transaction>) => Promise<void>;
   deleteEntry: (entry: Entry, scope?: "one" | "group") => Promise<void>;
   togglePaid: (entry: Entry) => Promise<void>;
+  importTransactions: (txs: Omit<Transaction, "id" | "createdAt" | "updatedAt">[]) => Promise<number>;
 
   saveAccount: (a: Upsertable<Account>) => Promise<void>;
   deleteAccount: (id: ID) => Promise<void>;
@@ -385,6 +386,16 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     [saveEntry, upsert],
   );
 
+  const importTransactions = useCallback(
+    async (txs: Omit<Transaction, "id" | "createdAt" | "updatedAt">[]) => {
+      const docs = txs.map((t) => stamp(t) as Transaction);
+      await upsert("transactions", docs);
+      notify(`${docs.length} lançamentos importados`);
+      return docs.length;
+    },
+    [upsert, notify],
+  );
+
   /* --------------------------- contas / cartões / etc --------------------------- */
 
   const saveAccount = useCallback(
@@ -618,6 +629,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       saveEntry,
       deleteEntry,
       togglePaid,
+      importTransactions,
       saveAccount,
       deleteAccount,
       saveCard,
@@ -639,7 +651,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       signOut,
     }),
     [
-      data, status, error, user, toast, notify, addTransaction, saveEntry, deleteEntry, togglePaid,
+      data, status, error, user, toast, notify, addTransaction, saveEntry, deleteEntry, togglePaid, importTransactions,
       saveAccount, deleteAccount, saveCard, deleteCard, saveCategory, deleteCategory, saveRecurrence,
       deleteRecurrence, payInvoice, reopenInvoice, replaceData, loadDemo, resetData,
       importLocalToFirebase, signIn, resetPassword, updateName, changePassword, signOut,

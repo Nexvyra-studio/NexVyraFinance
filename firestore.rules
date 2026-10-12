@@ -149,6 +149,8 @@ service cloud.firestore {
         && (d.installmentTotal == null || (d.installmentTotal is int && d.installmentTotal >= 1 && d.installmentTotal <= 120))
         && isStrOrNull(d.recurrenceId, 128)
         && isStr(d.notes, 300)
+        // opcional: id do extrato importado
+        && (!('externalId' in d) || isStrOrNull(d.externalId, 200))
         // precisa estar em uma conta OU em um cartão
         && (d.accountId != null || d.cardId != null)
         // compra no cartão sempre tem mês de fatura

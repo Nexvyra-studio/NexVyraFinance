@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowLeftRight, Search, X } from "lucide-react";
+import { ArrowLeftRight, FileUp, Search, X } from "lucide-react";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { EntryRow } from "@/components/entry-row";
@@ -56,9 +57,14 @@ export default function LancamentosPage() {
       <PageHeader
         title="Lançamentos"
         actions={
+          <>
+          <Link href="/importar" aria-label="Importar extrato" title="Importar extrato" className="grid size-10 place-items-center rounded-full text-muted hover:bg-surface-2 hover:text-fg">
+            <FileUp size={20} />
+          </Link>
           <IconButton label="Buscar" onClick={() => { setSearching((s) => !s); setQuery(""); }}>
             {searching ? <X size={20} /> : <Search size={20} />}
           </IconButton>
+          </>
         }
       />
 
